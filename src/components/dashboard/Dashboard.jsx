@@ -21,6 +21,7 @@ import {
   loadGame,
   saveGame,
   defaultGameState,
+  prepareGameForToday,
 } from '../../utils/storage'
 
 
@@ -31,19 +32,20 @@ import {
 const initialQuests = [
   {
     id: 1,
-    icon: '\u{1F4BB}',
+    icon: '💻',
     title: 'Master React',
     subtitle: 'Code for 60 minutes',
     category: 'Learning',
     difficulty: 'Hard',
     xp: 50,
     gold: 25,
-    completed: false,
+    completed: true,
+    isDaily: true,
   },
 
   {
     id: 2,
-    icon: '\u{1F3C3}',
+    icon: '🏃',
     title: 'Train Your Body',
     subtitle: 'Exercise for 30 minutes',
     category: 'Fitness',
@@ -51,11 +53,12 @@ const initialQuests = [
     xp: 40,
     gold: 20,
     completed: false,
+    isDaily: true,
   },
 
   {
     id: 3,
-    icon: '\u{1F4DA}',
+    icon: '📚',
     title: 'Knowledge Seeker',
     subtitle: 'Read 20 pages',
     category: 'Learning',
@@ -63,11 +66,12 @@ const initialQuests = [
     xp: 25,
     gold: 15,
     completed: false,
+    isDaily: true,
   },
 
   {
     id: 4,
-    icon: '\u{1F4A7}',
+    icon: '💧',
     title: 'Stay Hydrated',
     subtitle: 'Drink 2L of water',
     category: 'Health',
@@ -75,95 +79,137 @@ const initialQuests = [
     xp: 10,
     gold: 10,
     completed: false,
+    isDaily: true,
   },
 ]
 
 
+/* =========================================
+   DERIVE STARTING TOTALS FROM PRE-COMPLETED
+   QUESTS SO XP / GOLD NEVER GO OUT OF SYNC
+========================================= */
+
+const earnedFromCompleted = (quests, key) =>
+  quests
+    .filter((quest) => quest.completed)
+    .reduce((total, quest) => total + quest[key], 0)
+
+
 function Dashboard() {
 
-  /* =========================================
-     LOAD SAVED GAME
-  ========================================= */
+  /*
+  =========================================
+  LOAD GAME
+  =========================================
+  */
 
-  const savedGame = loadGame()
+  const rawSavedGame =
+    loadGame()
+
+  const preparedGame =
+    prepareGameForToday(
+      rawSavedGame
+    )
 
 
-  /* =========================================
-     PLAYER STATE
-  ========================================= */
+  /*
+  =========================================
+  PLAYER STATE
+  =========================================
+  */
 
   const [quests, setQuests] =
     useState(
-      savedGame?.quests?.length
-        ? savedGame.quests
+      preparedGame?.quests?.length
+        ? preparedGame.quests
         : initialQuests
     )
 
+
   const [level, setLevel] =
     useState(
-      savedGame?.level ??
+      preparedGame?.level ??
       defaultGameState.level
     )
 
+
   const [xp, setXp] =
     useState(
-      savedGame?.xp ??
-      defaultGameState.xp
+      preparedGame?.xp ??
+      earnedFromCompleted(initialQuests, 'xp')
     )
+
 
   const [gold, setGold] =
     useState(
-      savedGame?.gold ??
-      defaultGameState.gold
+      preparedGame?.gold ??
+      earnedFromCompleted(initialQuests, 'gold')
     )
+
 
   const [currentStreak, setCurrentStreak] =
     useState(
-      savedGame?.currentStreak ??
+      preparedGame?.currentStreak ??
       defaultGameState.currentStreak
     )
 
+
   const [bestStreak, setBestStreak] =
     useState(
-      savedGame?.bestStreak ??
+      preparedGame?.bestStreak ??
       defaultGameState.bestStreak
     )
 
+
   const [lastCompletionDate, setLastCompletionDate] =
     useState(
-      savedGame?.lastCompletionDate ??
+      preparedGame?.lastCompletionDate ??
       defaultGameState.lastCompletionDate
     )
 
 
-  /* =========================================
-     UI STATE
-  ========================================= */
+  /*
+  =========================================
+  UI STATE
+  =========================================
+  */
 
   const [levelUpMessage, setLevelUpMessage] =
     useState('')
 
+
   const [streakMessage, setStreakMessage] =
     useState('')
+
 
   const [showHabitModal, setShowHabitModal] =
     useState(false)
 
 
-  /* =========================================
-     AUTO SAVE GAME
-  ========================================= */
+  /*
+  =========================================
+  SAVE GAME
+  =========================================
+  */
 
   useEffect(() => {
 
     saveGame({
+
       quests,
+
       level,
+
       xp,
+
       gold,
+
       currentStreak,
+
       bestStreak,
+
       lastCompletionDate,
+
     })
 
   }, [
@@ -177,9 +223,11 @@ function Dashboard() {
   ])
 
 
-  /* =========================================
-     CALCULATIONS
-  ========================================= */
+  /*
+  =========================================
+  CALCULATIONS
+  =========================================
+  */
 
   const completedQuests =
     quests.filter(
@@ -187,8 +235,10 @@ function Dashboard() {
         quest.completed
     ).length
 
+
   const totalQuests =
     quests.length
+
 
   const progress =
     totalQuests > 0
@@ -199,31 +249,42 @@ function Dashboard() {
         )
       : 0
 
+
   const currentXpRequired =
     getXpRequired(level)
 
 
-  /* =========================================
-     CREATE HABIT
-  ========================================= */
+  /*
+  =========================================
+  CREATE HABIT
+  =========================================
+  */
 
   const createHabit = (
     newHabit
   ) => {
 
+    const dailyHabit = {
+      ...newHabit,
+      isDaily: true,
+      completed: false,
+    }
+
     setQuests(
       (currentQuests) => [
         ...currentQuests,
-        newHabit,
+        dailyHabit,
       ]
     )
 
   }
 
 
-  /* =========================================
-     DELETE QUEST
-  ========================================= */
+  /*
+  =========================================
+  DELETE QUEST
+  =========================================
+  */
 
   const deleteQuest = (
     questId
@@ -238,6 +299,7 @@ function Dashboard() {
       return
     }
 
+
     setQuests(
       (currentQuests) =>
         currentQuests.filter(
@@ -249,9 +311,11 @@ function Dashboard() {
   }
 
 
-  /* =========================================
-     COMPLETE QUEST
-  ========================================= */
+  /*
+  =========================================
+  COMPLETE QUEST
+  =========================================
+  */
 
   const completeQuest = (
     questId
@@ -263,6 +327,7 @@ function Dashboard() {
           quest.id === questId
       )
 
+
     if (
       !selectedQuest ||
       selectedQuest.completed
@@ -271,9 +336,11 @@ function Dashboard() {
     }
 
 
-    /* -------------------------------
-       MARK QUEST COMPLETE
-    -------------------------------- */
+    /*
+    -----------------------------------------
+    MARK COMPLETE
+    -----------------------------------------
+    */
 
     setQuests(
       (currentQuests) =>
@@ -289,9 +356,11 @@ function Dashboard() {
     )
 
 
-    /* -------------------------------
-       UPDATE STREAK
-    -------------------------------- */
+    /*
+    -----------------------------------------
+    STREAK
+    -----------------------------------------
+    */
 
     const streakResult =
       updateStreak(
@@ -300,22 +369,27 @@ function Dashboard() {
         lastCompletionDate
       )
 
+
     setCurrentStreak(
       streakResult.currentStreak
     )
 
+
     setBestStreak(
       streakResult.bestStreak
     )
+
 
     setLastCompletionDate(
       streakResult.lastCompletionDate
     )
 
 
-    /* -------------------------------
-       STREAK BONUS
-    -------------------------------- */
+    /*
+    -----------------------------------------
+    STREAK BONUS
+    -----------------------------------------
+    */
 
     const streakBonus =
       streakResult.streakIncreased
@@ -325,13 +399,16 @@ function Dashboard() {
         : 0
 
 
-    /* -------------------------------
-       ADD XP
-    -------------------------------- */
+    /*
+    -----------------------------------------
+    XP
+    -----------------------------------------
+    */
 
     const totalQuestXp =
       selectedQuest.xp +
       streakBonus
+
 
     const result =
       addXp(
@@ -340,14 +417,22 @@ function Dashboard() {
         totalQuestXp
       )
 
-    setXp(result.xp)
 
-    setLevel(result.level)
+    setXp(
+      result.xp
+    )
 
 
-    /* -------------------------------
-       ADD GOLD
-    -------------------------------- */
+    setLevel(
+      result.level
+    )
+
+
+    /*
+    -----------------------------------------
+    GOLD
+    -----------------------------------------
+    */
 
     setGold(
       (currentGold) =>
@@ -356,20 +441,20 @@ function Dashboard() {
     )
 
 
-    /* -------------------------------
-       LEVEL UP MESSAGE
-    -------------------------------- */
+    /*
+    -----------------------------------------
+    LEVEL UP
+    -----------------------------------------
+    */
 
     if (
       result.leveledUp
     ) {
 
-      const levelText =
-        'LEVEL UP! You are now Level ' +
-        result.level +
-        '!'
+      setLevelUpMessage(
+        `⚔️ LEVEL UP! You are now Level ${result.level}!`
+      )
 
-      setLevelUpMessage(levelText)
 
       setTimeout(() => {
 
@@ -380,9 +465,11 @@ function Dashboard() {
     }
 
 
-    /* -------------------------------
-       STREAK MESSAGE
-    -------------------------------- */
+    /*
+    -----------------------------------------
+    STREAK MESSAGE
+    -----------------------------------------
+    */
 
     if (
       streakResult.streakIncreased
@@ -390,15 +477,14 @@ function Dashboard() {
 
       const bonusText =
         streakBonus > 0
-          ? ' +' + streakBonus + ' bonus XP'
+          ? ` +${streakBonus} bonus XP`
           : ''
 
-      const streakText =
-        streakResult.currentStreak +
-        ' day streak!' +
-        bonusText
 
-      setStreakMessage(streakText)
+      setStreakMessage(
+        `🔥 ${streakResult.currentStreak} day streak!${bonusText}`
+      )
+
 
       setTimeout(() => {
 
@@ -411,9 +497,11 @@ function Dashboard() {
   }
 
 
-  /* =========================================
-     RENDER
-  ========================================= */
+  /*
+  =========================================
+  RENDER
+  =========================================
+  */
 
   return (
 
@@ -458,6 +546,7 @@ function Dashboard() {
             YOUR ADVENTURE
           </p>
 
+
           <h2>
 
             Good morning,{' '}
@@ -466,7 +555,10 @@ function Dashboard() {
               Aman
             </span>
 
+            {' '}👋
+
           </h2>
+
 
           <p className="header-subtitle">
 
@@ -483,14 +575,29 @@ function Dashboard() {
             📅
           </span>
 
+
           <div>
 
             <strong>
-              Monday
+              {new Date().toLocaleDateString(
+                'en-US',
+                {
+                  weekday: 'long',
+                }
+              )}
             </strong>
 
+
             <small>
-              31 August
+
+              {new Date().toLocaleDateString(
+                'en-US',
+                {
+                  day: 'numeric',
+                  month: 'long',
+                }
+              )}
+
             </small>
 
           </div>
@@ -538,9 +645,7 @@ function Dashboard() {
             <div className="level-row">
 
               <span>
-
                 LEVEL {level}
-
               </span>
 
 
@@ -687,11 +792,13 @@ function Dashboard() {
             🔥
           </div>
 
+
           <div>
 
             <strong>
               {currentStreak} Day
             </strong>
+
 
             <span>
               Current Streak
@@ -708,11 +815,13 @@ function Dashboard() {
             ⚔️
           </div>
 
+
           <div>
 
             <strong>
               {completedQuests} / {totalQuests}
             </strong>
+
 
             <span>
               Today's Quests
@@ -729,11 +838,13 @@ function Dashboard() {
             🏆
           </div>
 
+
           <div>
 
             <strong>
               {bestStreak} Days
             </strong>
+
 
             <span>
               Best Streak
@@ -748,7 +859,7 @@ function Dashboard() {
 
 
       {/* =====================================
-          QUEST SECTION
+          QUESTS
       ===================================== */}
 
       <section className="quests-section">
@@ -762,6 +873,7 @@ function Dashboard() {
             <p className="eyebrow">
               DAILY MISSIONS
             </p>
+
 
             <h3>
               Today's Quests
@@ -786,16 +898,10 @@ function Dashboard() {
         </div>
 
 
-        {/* ===================================
-            QUEST LIST
-        =================================== */}
-
         <div className="quest-list">
 
 
           {quests.length === 0 ? (
-
-            /* EMPTY STATE */
 
             <div className="empty-quests">
 
@@ -803,19 +909,26 @@ function Dashboard() {
                 🗺️
               </div>
 
+
               <strong>
                 No quests yet
               </strong>
 
+
               <span>
+
                 Create your first habit
                 and begin your adventure.
+
               </span>
 
+
               <button
+
                 onClick={() =>
                   setShowHabitModal(true)
                 }
+
               >
                 + Create First Quest
               </button>
@@ -823,8 +936,6 @@ function Dashboard() {
             </div>
 
           ) : (
-
-            /* QUEST CARDS */
 
             quests.map(
               (quest) => (
@@ -842,8 +953,6 @@ function Dashboard() {
                 >
 
 
-                  {/* ICON */}
-
                   <div className="quest-icon">
 
                     {quest.icon}
@@ -851,13 +960,12 @@ function Dashboard() {
                   </div>
 
 
-                  {/* INFO */}
-
                   <div className="quest-info">
 
                     <strong>
                       {quest.title}
                     </strong>
+
 
                     <span>
                       {quest.subtitle}
@@ -895,17 +1003,17 @@ function Dashboard() {
                   </div>
 
 
-                  {/* REWARD */}
-
                   <div className="quest-reward">
 
                     <span>
                       +{quest.xp}
                     </span>
 
+
                     <small>
                       XP
                     </small>
+
 
                     <small>
                       +{quest.gold} 🪙
@@ -913,8 +1021,6 @@ function Dashboard() {
 
                   </div>
 
-
-                  {/* COMPLETE */}
 
                   <button
 
@@ -934,12 +1040,6 @@ function Dashboard() {
                       quest.completed
                     }
 
-                    aria-label={
-                      quest.completed
-                        ? `${quest.title} completed`
-                        : `Complete ${quest.title}`
-                    }
-
                   >
 
                     {quest.completed
@@ -948,8 +1048,6 @@ function Dashboard() {
 
                   </button>
 
-
-                  {/* DELETE */}
 
                   <button
 
@@ -961,10 +1059,6 @@ function Dashboard() {
                       )
                     }
 
-                    aria-label={
-                      `Delete ${quest.title}`
-                    }
-
                   >
                     🗑️
                   </button>
@@ -973,7 +1067,6 @@ function Dashboard() {
                 </div>
 
               )
-
             )
 
           )}
@@ -1007,11 +1100,12 @@ function Dashboard() {
                 DAILY PROGRESS
               </span>
 
+
               <strong>
 
                 {progress === 100
 
-                  ? 'All quests completed!'
+                  ? 'All quests completed! 🎉'
 
                   : 'Keep going, Adventurer!'}
 
