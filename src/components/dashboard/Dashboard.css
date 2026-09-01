@@ -453,6 +453,45 @@
   font-weight: 800;
 }
 
+/* ADD QUEST BUTTON */
+
+.add-quest-button {
+  padding: 6px 12px;
+
+  border:
+    1px solid
+    rgba(139, 77, 255, 0.4);
+
+  border-radius: 9px;
+
+  background:
+    rgba(139, 77, 255, 0.12);
+
+  color: var(--purple);
+
+  font-family: inherit;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition: 0.18s ease;
+}
+
+.add-quest-button:hover {
+  background:
+    rgba(139, 77, 255, 0.22);
+
+  border-color:
+    rgba(139, 77, 255, 0.6);
+
+  color: white;
+
+  transform:
+    translateY(-1px);
+}
+
 .quest-list {
   display: flex;
 
@@ -783,6 +822,11 @@
     max-width: 90%;
 
     text-align: center;
+  }
+
+  .section-heading {
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
 }

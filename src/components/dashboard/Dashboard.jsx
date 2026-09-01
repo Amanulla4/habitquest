@@ -11,6 +11,8 @@ import {
   getStreakBonus,
 } from '../../utils/streak'
 
+import HabitModal from '../habits/HabitModal'
+
 const initialQuests = [
   {
     id: 1,
@@ -85,6 +87,9 @@ function Dashboard() {
   const [streakMessage, setStreakMessage] =
     useState('')
 
+  const [showHabitModal, setShowHabitModal] =
+    useState(false)
+
   const completedQuests =
     quests.filter(
       (quest) => quest.completed
@@ -105,11 +110,13 @@ function Dashboard() {
       )
 
   const progress =
-    Math.round(
-      (completedQuests /
-        totalQuests) *
-        100
-    )
+    totalQuests === 0
+      ? 0
+      : Math.round(
+          (completedQuests /
+            totalQuests) *
+            100
+        )
 
   const currentXpRequired =
     getXpRequired(level)
@@ -240,6 +247,13 @@ function Dashboard() {
     }
   }
 
+  const handleCreateHabit = (newHabit) => {
+    setQuests((currentQuests) => [
+      ...currentQuests,
+      newHabit,
+    ])
+  }
+
   return (
     <div className="dashboard">
 
@@ -255,6 +269,17 @@ function Dashboard() {
         <div className="streak-message">
           {streakMessage}
         </div>
+      )}
+
+      {/* HABIT CREATE MODAL */}
+
+      {showHabitModal && (
+        <HabitModal
+          onClose={() =>
+            setShowHabitModal(false)
+          }
+          onCreate={handleCreateHabit}
+        />
       )}
 
       {/* HEADER */}
@@ -530,10 +555,30 @@ function Dashboard() {
 
           </div>
 
-          <span className="quest-count">
-            {completedQuests}/
-            {totalQuests}
-          </span>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+          >
+
+            <span className="quest-count">
+              {completedQuests}/
+              {totalQuests}
+            </span>
+
+            <button
+              type="button"
+              className="add-quest-button"
+              onClick={() =>
+                setShowHabitModal(true)
+              }
+            >
+              + Add Quest
+            </button>
+
+          </div>
 
         </div>
 
