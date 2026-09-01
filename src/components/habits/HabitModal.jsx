@@ -1,250 +1,374 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+
 import './HabitModal.css'
 
-const ICONS = [
-  '💪',
-  '📚',
-  '💧',
-  '🧘',
-  '💻',
-  '🏃',
-  '🥗',
-  '😴',
-  '🎯',
-  '🎨',
-  '🎸',
-  '📝',
-]
 
-const CATEGORIES = [
+const categories = [
   'Health',
   'Fitness',
   'Learning',
-  'Productivity',
-  'Mindfulness',
+  'Work',
   'Personal',
+  'Finance',
+  'Social',
+  'Other',
 ]
 
-const DIFFICULTIES = {
+
+const difficulties = {
   Easy: {
-    xp: 15,
-    gold: 10,
+    xp: 10,
+    gold: 5,
   },
+
   Medium: {
-    xp: 30,
-    gold: 20,
+    xp: 25,
+    gold: 15,
   },
+
   Hard: {
     xp: 50,
-    gold: 35,
+    gold: 25,
+  },
+
+  Epic: {
+    xp: 100,
+    gold: 50,
   },
 }
 
-function HabitModal({ onClose, onCreate }) {
-  const [name, setName] = useState('')
+
+const frequencies = [
+  'Daily',
+  'Weekdays',
+  'Weekends',
+  'Weekly',
+]
+
+
+const icons = [
+  '🎯',
+  '🏃',
+  '💪',
+  '📚',
+  '💻',
+  '🧘',
+  '💧',
+  '🥗',
+  '💰',
+  '🧠',
+  '🎨',
+  '🎮',
+]
+
+
+function HabitModal({
+  onClose,
+  onCreate,
+}) {
+
+  const [title, setTitle] =
+    useState('')
+
+
+  const [description, setDescription] =
+    useState('')
+
 
   const [icon, setIcon] =
     useState('🎯')
 
+
   const [category, setCategory] =
     useState('Personal')
+
 
   const [difficulty, setDifficulty] =
     useState('Medium')
 
+
+  const [frequency, setFrequency] =
+    useState('Daily')
+
+
   const [error, setError] =
     useState('')
 
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
 
-    document.addEventListener(
-      'keydown',
-      handleKeyDown
-    )
+  const reward =
+    difficulties[difficulty]
 
-    return () => {
-      document.removeEventListener(
-        'keydown',
-        handleKeyDown
-      )
-    }
-  }, [onClose])
 
   const handleSubmit = (event) => {
+
     event.preventDefault()
 
-    const trimmedName =
-      name.trim()
 
-    if (!trimmedName) {
+    const cleanTitle =
+      title.trim()
+
+
+    if (!cleanTitle) {
+
       setError(
-        'Give your habit a name.'
+        'Give your quest a name first.'
       )
+
       return
     }
 
-    if (trimmedName.length > 40) {
+
+    if (
+      cleanTitle.length < 2
+    ) {
+
       setError(
-        'Habit name must be 40 characters or less.'
+        'Quest name is too short.'
       )
+
       return
     }
 
-    const reward =
-      DIFFICULTIES[difficulty]
 
     const newHabit = {
-      id: Date.now(),
+
+      id:
+        Date.now(),
 
       icon,
 
-      title: trimmedName,
+      title:
+        cleanTitle,
 
-      subtitle: `Daily ${category.toLowerCase()} quest`,
+      subtitle:
+        description.trim() ||
+        'Complete this habit',
 
       category,
 
       difficulty,
 
-      xp: reward.xp,
+      frequency,
 
-      gold: reward.gold,
+      xp:
+        reward.xp,
 
-      completed: false,
+      gold:
+        reward.gold,
+
+      completed:
+        false,
+
+      isDaily:
+        frequency === 'Daily',
+
+      createdAt:
+        new Date().toISOString(),
+
     }
 
-    onCreate(newHabit)
+
+    onCreate(
+      newHabit
+    )
+
 
     onClose()
+
   }
 
+
+  const handleOverlayClick = (
+    event
+  ) => {
+
+    if (
+      event.target ===
+      event.currentTarget
+    ) {
+
+      onClose()
+
+    }
+
+  }
+
+
   return (
+
     <div
+
       className="habit-modal-overlay"
-      onMouseDown={(event) => {
-        if (
-          event.target ===
-          event.currentTarget
-        ) {
-          onClose()
-        }
-      }}
+
+      onMouseDown={
+        handleOverlayClick
+      }
+
     >
 
       <div
         className="habit-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="habit-modal-title"
       >
 
-        {/* HEADER */}
+
+        {/* =================================
+            HEADER
+        ================================= */}
 
         <div className="habit-modal-header">
 
           <div>
 
-            <span className="habit-modal-eyebrow">
+            <span className="eyebrow">
               NEW QUEST
             </span>
 
-            <h2 id="habit-modal-title">
-              Create Habit
+            <h2>
+              Create a Habit
             </h2>
 
             <p>
-              Turn a real-life habit
+              Turn a real-world habit
               into an adventure.
             </p>
 
           </div>
 
+
           <button
+
             type="button"
-            className="habit-modal-close"
+
+            className="modal-close"
+
             onClick={onClose}
+
             aria-label="Close"
+
           >
             ×
           </button>
 
         </div>
 
+
+        {/* =================================
+            FORM
+        ================================= */}
+
         <form
-          className="habit-form"
           onSubmit={handleSubmit}
         >
 
-          {/* NAME */}
+
+          {/* ===============================
+              QUEST NAME
+          =============================== */}
 
           <div className="form-group">
 
-            <label htmlFor="habit-name">
-              HABIT NAME
+            <label htmlFor="habit-title">
+              Quest Name
             </label>
 
             <input
-              id="habit-name"
+
+              id="habit-title"
+
               type="text"
-              value={name}
+
+              value={title}
+
               onChange={(event) => {
-                setName(event.target.value)
+
+                setTitle(
+                  event.target.value
+                )
+
                 setError('')
+
               }}
+
               placeholder="e.g. Read 20 pages"
-              maxLength={40}
+
+              maxLength={60}
+
               autoFocus
+
             />
-
-            <div className="input-meta">
-
-              <span>
-                Make it specific and achievable.
-              </span>
-
-              <small>
-                {name.length}/40
-              </small>
-
-            </div>
 
           </div>
 
-          {/* ICON */}
+
+          {/* ===============================
+              DESCRIPTION
+          =============================== */}
+
+          <div className="form-group">
+
+            <label htmlFor="habit-description">
+              Description
+            </label>
+
+            <input
+
+              id="habit-description"
+
+              type="text"
+
+              value={description}
+
+              onChange={(event) =>
+                setDescription(
+                  event.target.value
+                )
+              }
+
+              placeholder="e.g. Read before going to bed"
+
+              maxLength={100}
+
+            />
+
+          </div>
+
+
+          {/* ===============================
+              ICON
+          =============================== */}
 
           <div className="form-group">
 
             <label>
-              QUEST ICON
+              Choose Icon
             </label>
+
 
             <div className="icon-picker">
 
-              {ICONS.map(
+              {icons.map(
                 (item) => (
 
                   <button
+
                     key={item}
+
                     type="button"
+
                     className={
                       icon === item
-                        ? 'selected'
-                        : ''
+                        ? 'icon-option selected'
+                        : 'icon-option'
                     }
+
                     onClick={() =>
                       setIcon(item)
                     }
-                    aria-label={
-                      `Select ${item}`
-                    }
+
                   >
+
                     {item}
+
                   </button>
 
                 )
@@ -254,79 +378,144 @@ function HabitModal({ onClose, onCreate }) {
 
           </div>
 
-          {/* CATEGORY */}
 
-          <div className="form-group">
-
-            <label>
+          {/* ===============================
               CATEGORY
-            </label>
+          =============================== */}
 
-            <div className="category-grid">
+          <div className="form-row">
 
-              {CATEGORIES.map(
-                (item) => (
 
-                  <button
-                    key={item}
-                    type="button"
-                    className={
-                      category === item
-                        ? 'selected'
-                        : ''
-                    }
-                    onClick={() =>
-                      setCategory(item)
-                    }
-                  >
-                    {item}
-                  </button>
+            <div className="form-group">
 
-                )
-              )}
+              <label htmlFor="habit-category">
+                Category
+              </label>
+
+              <select
+
+                id="habit-category"
+
+                value={category}
+
+                onChange={(event) =>
+                  setCategory(
+                    event.target.value
+                  )
+                }
+
+              >
+
+                {categories.map(
+                  (item) => (
+
+                    <option
+                      key={item}
+                      value={item}
+                    >
+                      {item}
+                    </option>
+
+                  )
+                )}
+
+              </select>
+
+            </div>
+
+
+            {/* =============================
+                FREQUENCY
+            ============================= */}
+
+            <div className="form-group">
+
+              <label htmlFor="habit-frequency">
+                Frequency
+              </label>
+
+              <select
+
+                id="habit-frequency"
+
+                value={frequency}
+
+                onChange={(event) =>
+                  setFrequency(
+                    event.target.value
+                  )
+                }
+
+              >
+
+                {frequencies.map(
+                  (item) => (
+
+                    <option
+                      key={item}
+                      value={item}
+                    >
+                      {item}
+                    </option>
+
+                  )
+                )}
+
+              </select>
 
             </div>
 
           </div>
 
-          {/* DIFFICULTY */}
+
+          {/* ===============================
+              DIFFICULTY
+          =============================== */}
 
           <div className="form-group">
 
             <label>
-              DIFFICULTY
+              Difficulty
             </label>
 
-            <div className="difficulty-grid">
+
+            <div className="difficulty-picker">
 
               {Object.entries(
-                DIFFICULTIES
+                difficulties
               ).map(
-                ([item, reward]) => (
+                ([name, values]) => (
 
                   <button
-                    key={item}
+
+                    key={name}
+
                     type="button"
+
                     className={
-                      difficulty === item
-                        ? 'selected'
-                        : ''
+                      difficulty === name
+                        ? 'difficulty-option selected'
+                        : 'difficulty-option'
                     }
+
                     onClick={() =>
-                      setDifficulty(item)
+                      setDifficulty(
+                        name
+                      )
                     }
+
                   >
 
                     <strong>
-                      {item}
+                      {name}
                     </strong>
 
                     <span>
-                      +{reward.xp} XP
+                      +{values.xp} XP
                     </span>
 
                     <small>
-                      +{reward.gold} 🪙
+                      +{values.gold} 🪙
                     </small>
 
                   </button>
@@ -338,41 +527,95 @@ function HabitModal({ onClose, onCreate }) {
 
           </div>
 
-          {/* ERROR */}
+
+          {/* ===============================
+              REWARD PREVIEW
+          =============================== */}
+
+          <div className="reward-preview">
+
+            <div>
+
+              <span>
+                QUEST REWARD
+              </span>
+
+              <strong>
+                {icon} {title.trim() || 'Your Quest'}
+              </strong>
+
+            </div>
+
+
+            <div className="reward-values">
+
+              <b>
+                +{reward.xp} XP
+              </b>
+
+              <b>
+                +{reward.gold} 🪙
+              </b>
+
+            </div>
+
+          </div>
+
+
+          {/* ===============================
+              ERROR
+          =============================== */}
 
           {error && (
-            <div className="habit-form-error">
+
+            <p className="form-error">
               ⚠️ {error}
-            </div>
+            </p>
+
           )}
 
-          {/* ACTIONS */}
 
-          <div className="habit-form-actions">
+          {/* ===============================
+              ACTIONS
+          =============================== */}
+
+          <div className="habit-modal-actions">
 
             <button
+
               type="button"
-              className="habit-cancel-button"
+
+              className="modal-secondary"
+
               onClick={onClose}
+
             >
               Cancel
             </button>
 
+
             <button
+
               type="submit"
-              className="habit-create-button"
+
+              className="modal-primary"
+
             >
               ⚔️ Create Quest
             </button>
 
           </div>
 
+
         </form>
 
       </div>
 
     </div>
+
   )
+
 }
+
 
 export default HabitModal

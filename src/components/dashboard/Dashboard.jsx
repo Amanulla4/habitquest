@@ -257,6 +257,15 @@ function Dashboard() {
   /*
   =========================================
   CREATE HABIT
+
+  NOTE: HabitModal already computes
+  the correct isDaily value based on
+  the chosen frequency (Daily vs
+  Weekly / Weekdays / Weekends), so
+  we no longer override it here.
+  Overriding it to true would make
+  every habit reset daily regardless
+  of the frequency the user picked.
   =========================================
   */
 
@@ -264,16 +273,10 @@ function Dashboard() {
     newHabit
   ) => {
 
-    const dailyHabit = {
-      ...newHabit,
-      isDaily: true,
-      completed: false,
-    }
-
     setQuests(
       (currentQuests) => [
         ...currentQuests,
-        dailyHabit,
+        newHabit,
       ]
     )
 
@@ -996,6 +999,19 @@ function Dashboard() {
                           'Habit'}
 
                       </small>
+
+
+                      {quest.frequency &&
+                        quest.frequency !==
+                          'Daily' && (
+
+                          <small>
+
+                            {quest.frequency}
+
+                          </small>
+
+                        )}
 
 
                     </div>
