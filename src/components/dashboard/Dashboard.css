@@ -526,6 +526,7 @@
   cursor: default;
 }
 
+.quest-edit,
 .quest-delete {
   width: 30px;
   height: 30px;
@@ -537,6 +538,13 @@
   cursor: pointer;
   opacity: 0.5;
   transition: 0.18s ease;
+}
+
+.quest-edit:hover {
+  opacity: 1;
+  border-color: rgba(139, 77, 255, 0.35);
+  background: rgba(139, 77, 255, 0.12);
+  transform: scale(1.08);
 }
 
 .quest-delete:hover {

@@ -25,10 +25,6 @@ import {
 } from '../../utils/storage'
 
 
-/* =========================================
-   DEFAULT QUESTS
-========================================= */
-
 const initialQuests = [
   {
     id: 1,
@@ -37,6 +33,7 @@ const initialQuests = [
     subtitle: 'Code for 60 minutes',
     category: 'Learning',
     difficulty: 'Hard',
+    frequency: 'Daily',
     xp: 50,
     gold: 25,
     completed: true,
@@ -50,8 +47,9 @@ const initialQuests = [
     subtitle: 'Exercise for 30 minutes',
     category: 'Fitness',
     difficulty: 'Medium',
-    xp: 40,
-    gold: 20,
+    frequency: 'Daily',
+    xp: 25,
+    gold: 15,
     completed: false,
     isDaily: true,
   },
@@ -63,6 +61,7 @@ const initialQuests = [
     subtitle: 'Read 20 pages',
     category: 'Learning',
     difficulty: 'Medium',
+    frequency: 'Daily',
     xp: 25,
     gold: 15,
     completed: false,
@@ -76,8 +75,9 @@ const initialQuests = [
     subtitle: 'Drink 2L of water',
     category: 'Health',
     difficulty: 'Easy',
+    frequency: 'Daily',
     xp: 10,
-    gold: 10,
+    gold: 5,
     completed: false,
     isDaily: true,
   },
@@ -97,12 +97,6 @@ const earnedFromCompleted = (quests, key) =>
 
 function Dashboard() {
 
-  /*
-  =========================================
-  LOAD GAME
-  =========================================
-  */
-
   const rawSavedGame =
     loadGame()
 
@@ -111,12 +105,6 @@ function Dashboard() {
       rawSavedGame
     )
 
-
-  /*
-  =========================================
-  PLAYER STATE
-  =========================================
-  */
 
   const [quests, setQuests] =
     useState(
@@ -168,12 +156,6 @@ function Dashboard() {
     )
 
 
-  /*
-  =========================================
-  UI STATE
-  =========================================
-  */
-
   const [levelUpMessage, setLevelUpMessage] =
     useState('')
 
@@ -186,9 +168,13 @@ function Dashboard() {
     useState(false)
 
 
+  const [editingHabit, setEditingHabit] =
+    useState(null)
+
+
   /*
   =========================================
-  SAVE GAME
+  AUTO SAVE
   =========================================
   */
 
@@ -197,17 +183,11 @@ function Dashboard() {
     saveGame({
 
       quests,
-
       level,
-
       xp,
-
       gold,
-
       currentStreak,
-
       bestStreak,
-
       lastCompletionDate,
 
     })
@@ -256,16 +236,54 @@ function Dashboard() {
 
   /*
   =========================================
-  CREATE HABIT
+  OPEN CREATE MODAL
+  =========================================
+  */
 
-  NOTE: HabitModal already computes
-  the correct isDaily value based on
-  the chosen frequency (Daily vs
-  Weekly / Weekdays / Weekends), so
-  we no longer override it here.
-  Overriding it to true would make
-  every habit reset daily regardless
-  of the frequency the user picked.
+  const openCreateHabit = () => {
+
+    setEditingHabit(null)
+
+    setShowHabitModal(true)
+
+  }
+
+
+  /*
+  =========================================
+  OPEN EDIT MODAL
+  =========================================
+  */
+
+  const openEditHabit = (
+    habit
+  ) => {
+
+    setEditingHabit(habit)
+
+    setShowHabitModal(true)
+
+  }
+
+
+  /*
+  =========================================
+  CLOSE MODAL
+  =========================================
+  */
+
+  const closeHabitModal = () => {
+
+    setShowHabitModal(false)
+
+    setEditingHabit(null)
+
+  }
+
+
+  /*
+  =========================================
+  CREATE HABIT
   =========================================
   */
 
@@ -275,8 +293,11 @@ function Dashboard() {
 
     setQuests(
       (currentQuests) => [
+
         ...currentQuests,
+
         newHabit,
+
       ]
     )
 
@@ -285,7 +306,43 @@ function Dashboard() {
 
   /*
   =========================================
-  DELETE QUEST
+  UPDATE HABIT
+  =========================================
+  */
+
+  const updateHabit = (
+    updatedHabit
+  ) => {
+
+    setQuests(
+      (currentQuests) =>
+        currentQuests.map(
+          (quest) =>
+            quest.id ===
+            updatedHabit.id
+
+              ? {
+                  ...quest,
+                  ...updatedHabit,
+
+                  /*
+                   * Editing a habit does
+                   * NOT reset completion.
+                   */
+                  completed:
+                    quest.completed,
+                }
+
+              : quest
+        )
+    )
+
+  }
+
+
+  /*
+  =========================================
+  DELETE HABIT
   =========================================
   */
 
@@ -297,6 +354,7 @@ function Dashboard() {
       window.confirm(
         'Delete this quest?'
       )
+
 
     if (!confirmed) {
       return
@@ -339,31 +397,21 @@ function Dashboard() {
     }
 
 
-    /*
-    -----------------------------------------
-    MARK COMPLETE
-    -----------------------------------------
-    */
-
     setQuests(
       (currentQuests) =>
         currentQuests.map(
           (quest) =>
             quest.id === questId
+
               ? {
                   ...quest,
                   completed: true,
                 }
+
               : quest
         )
     )
 
-
-    /*
-    -----------------------------------------
-    STREAK
-    -----------------------------------------
-    */
 
     const streakResult =
       updateStreak(
@@ -388,12 +436,6 @@ function Dashboard() {
     )
 
 
-    /*
-    -----------------------------------------
-    STREAK BONUS
-    -----------------------------------------
-    */
-
     const streakBonus =
       streakResult.streakIncreased
         ? getStreakBonus(
@@ -401,12 +443,6 @@ function Dashboard() {
           )
         : 0
 
-
-    /*
-    -----------------------------------------
-    XP
-    -----------------------------------------
-    */
 
     const totalQuestXp =
       selectedQuest.xp +
@@ -421,21 +457,10 @@ function Dashboard() {
       )
 
 
-    setXp(
-      result.xp
-    )
+    setXp(result.xp)
 
+    setLevel(result.level)
 
-    setLevel(
-      result.level
-    )
-
-
-    /*
-    -----------------------------------------
-    GOLD
-    -----------------------------------------
-    */
 
     setGold(
       (currentGold) =>
@@ -443,12 +468,6 @@ function Dashboard() {
         selectedQuest.gold
     )
 
-
-    /*
-    -----------------------------------------
-    LEVEL UP
-    -----------------------------------------
-    */
 
     if (
       result.leveledUp
@@ -460,19 +479,11 @@ function Dashboard() {
 
 
       setTimeout(() => {
-
         setLevelUpMessage('')
-
       }, 3000)
 
     }
 
-
-    /*
-    -----------------------------------------
-    STREAK MESSAGE
-    -----------------------------------------
-    */
 
     if (
       streakResult.streakIncreased
@@ -490,21 +501,13 @@ function Dashboard() {
 
 
       setTimeout(() => {
-
         setStreakMessage('')
-
       }, 3000)
 
     }
 
   }
 
-
-  /*
-  =========================================
-  RENDER
-  =========================================
-  */
 
   return (
 
@@ -518,9 +521,7 @@ function Dashboard() {
       {levelUpMessage && (
 
         <div className="level-up-message">
-
           {levelUpMessage}
-
         </div>
 
       )}
@@ -529,9 +530,7 @@ function Dashboard() {
       {streakMessage && (
 
         <div className="streak-message">
-
           {streakMessage}
-
         </div>
 
       )}
@@ -564,9 +563,7 @@ function Dashboard() {
 
 
           <p className="header-subtitle">
-
             Ready to continue your journey?
-
           </p>
 
         </div>
@@ -582,12 +579,14 @@ function Dashboard() {
           <div>
 
             <strong>
+
               {new Date().toLocaleDateString(
                 'en-US',
                 {
                   weekday: 'long',
                 }
               )}
+
             </strong>
 
 
@@ -611,7 +610,7 @@ function Dashboard() {
 
 
       {/* =====================================
-          PLAYER CARD
+          HERO
       ===================================== */}
 
       <section className="hero-card">
@@ -620,7 +619,6 @@ function Dashboard() {
 
 
         <div className="character">
-
 
           <div className="character-ring">
 
@@ -634,9 +632,7 @@ function Dashboard() {
           <div className="character-info">
 
             <span className="character-title">
-
               NOVICE ADVENTURER
-
             </span>
 
 
@@ -653,9 +649,7 @@ function Dashboard() {
 
 
               <span>
-
                 {xp} / {currentXpRequired} XP
-
               </span>
 
             </div>
@@ -686,9 +680,7 @@ function Dashboard() {
         </div>
 
 
-        {/* ===================================
-            RESOURCES
-        =================================== */}
+        {/* RESOURCES */}
 
         <div className="resources">
 
@@ -795,13 +787,11 @@ function Dashboard() {
             🔥
           </div>
 
-
           <div>
 
             <strong>
               {currentStreak} Day
             </strong>
-
 
             <span>
               Current Streak
@@ -818,13 +808,11 @@ function Dashboard() {
             ⚔️
           </div>
 
-
           <div>
 
             <strong>
               {completedQuests} / {totalQuests}
             </strong>
-
 
             <span>
               Today's Quests
@@ -841,13 +829,11 @@ function Dashboard() {
             🏆
           </div>
 
-
           <div>
 
             <strong>
               {bestStreak} Days
             </strong>
-
 
             <span>
               Best Streak
@@ -856,7 +842,6 @@ function Dashboard() {
           </div>
 
         </div>
-
 
       </div>
 
@@ -870,13 +855,11 @@ function Dashboard() {
 
         <div className="section-heading">
 
-
           <div>
 
             <p className="eyebrow">
               DAILY MISSIONS
             </p>
-
 
             <h3>
               Today's Quests
@@ -889,14 +872,13 @@ function Dashboard() {
 
             className="add-habit-button"
 
-            onClick={() =>
-              setShowHabitModal(true)
+            onClick={
+              openCreateHabit
             }
 
           >
             + Add Habit
           </button>
-
 
         </div>
 
@@ -912,26 +894,19 @@ function Dashboard() {
                 🗺️
               </div>
 
-
               <strong>
                 No quests yet
               </strong>
 
-
               <span>
-
                 Create your first habit
                 and begin your adventure.
-
               </span>
 
-
               <button
-
-                onClick={() =>
-                  setShowHabitModal(true)
+                onClick={
+                  openCreateHabit
                 }
-
               >
                 + Create First Quest
               </button>
@@ -957,9 +932,7 @@ function Dashboard() {
 
 
                   <div className="quest-icon">
-
                     {quest.icon}
-
                   </div>
 
 
@@ -977,7 +950,6 @@ function Dashboard() {
 
                     <div className="quest-tags">
 
-
                       <small
 
                         className={`difficulty-tag ${
@@ -994,25 +966,9 @@ function Dashboard() {
 
 
                       <small>
-
                         {quest.category ||
                           'Habit'}
-
                       </small>
-
-
-                      {quest.frequency &&
-                        quest.frequency !==
-                          'Daily' && (
-
-                          <small>
-
-                            {quest.frequency}
-
-                          </small>
-
-                        )}
-
 
                     </div>
 
@@ -1025,11 +981,9 @@ function Dashboard() {
                       +{quest.xp}
                     </span>
 
-
                     <small>
                       XP
                     </small>
-
 
                     <small>
                       +{quest.gold} 🪙
@@ -1037,6 +991,8 @@ function Dashboard() {
 
                   </div>
 
+
+                  {/* COMPLETE */}
 
                   <button
 
@@ -1056,6 +1012,10 @@ function Dashboard() {
                       quest.completed
                     }
 
+                    aria-label={
+                      `Complete ${quest.title}`
+                    }
+
                   >
 
                     {quest.completed
@@ -1064,6 +1024,29 @@ function Dashboard() {
 
                   </button>
 
+
+                  {/* EDIT */}
+
+                  <button
+
+                    className="quest-edit"
+
+                    onClick={() =>
+                      openEditHabit(
+                        quest
+                      )
+                    }
+
+                    aria-label={
+                      `Edit ${quest.title}`
+                    }
+
+                  >
+                    ✏️
+                  </button>
+
+
+                  {/* DELETE */}
 
                   <button
 
@@ -1075,6 +1058,10 @@ function Dashboard() {
                       )
                     }
 
+                    aria-label={
+                      `Delete ${quest.title}`
+                    }
+
                   >
                     🗑️
                   </button>
@@ -1083,6 +1070,7 @@ function Dashboard() {
                 </div>
 
               )
+
             )
 
           )}
@@ -1098,7 +1086,6 @@ function Dashboard() {
 
       <section className="daily-progress-card">
 
-
         <div className="progress-icon">
           🏆
         </div>
@@ -1106,9 +1093,7 @@ function Dashboard() {
 
         <div className="progress-content">
 
-
           <div className="progress-header">
-
 
             <div>
 
@@ -1120,9 +1105,7 @@ function Dashboard() {
               <strong>
 
                 {progress === 100
-
                   ? 'All quests completed! 🎉'
-
                   : 'Keep going, Adventurer!'}
 
               </strong>
@@ -1133,7 +1116,6 @@ function Dashboard() {
             <b>
               {progress}%
             </b>
-
 
           </div>
 
@@ -1151,7 +1133,6 @@ function Dashboard() {
 
           </div>
 
-
         </div>
 
       </section>
@@ -1165,11 +1146,21 @@ function Dashboard() {
 
         <HabitModal
 
-          onClose={() =>
-            setShowHabitModal(false)
+          onClose={
+            closeHabitModal
           }
 
-          onCreate={createHabit}
+          onCreate={
+            createHabit
+          }
+
+          onUpdate={
+            updateHabit
+          }
+
+          editingHabit={
+            editingHabit
+          }
 
         />
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import './HabitModal.css'
 
@@ -65,7 +65,13 @@ const icons = [
 function HabitModal({
   onClose,
   onCreate,
+  onUpdate,
+  editingHabit = null,
 }) {
+
+  const isEditing =
+    Boolean(editingHabit)
+
 
   const [title, setTitle] =
     useState('')
@@ -95,11 +101,70 @@ function HabitModal({
     useState('')
 
 
+  /*
+  =========================================
+  LOAD HABIT INTO FORM WHEN EDITING
+  =========================================
+  */
+
+  useEffect(() => {
+
+    if (!editingHabit) {
+      return
+    }
+
+
+    setTitle(
+      editingHabit.title || ''
+    )
+
+
+    setDescription(
+      editingHabit.subtitle || ''
+    )
+
+
+    setIcon(
+      editingHabit.icon || '🎯'
+    )
+
+
+    setCategory(
+      editingHabit.category ||
+      'Personal'
+    )
+
+
+    setDifficulty(
+      editingHabit.difficulty ||
+      'Medium'
+    )
+
+
+    setFrequency(
+      editingHabit.frequency ||
+      'Daily'
+    )
+
+
+    setError('')
+
+  }, [editingHabit])
+
+
   const reward =
     difficulties[difficulty]
 
 
-  const handleSubmit = (event) => {
+  /*
+  =========================================
+  SUBMIT
+  =========================================
+  */
+
+  const handleSubmit = (
+    event
+  ) => {
 
     event.preventDefault()
 
@@ -129,6 +194,67 @@ function HabitModal({
       return
     }
 
+
+    /*
+    =======================================
+    EDIT EXISTING HABIT
+    =======================================
+    */
+
+    if (isEditing) {
+
+      const updatedHabit = {
+
+        ...editingHabit,
+
+        icon,
+
+        title:
+          cleanTitle,
+
+        subtitle:
+          description.trim() ||
+          'Complete this habit',
+
+        category,
+
+        difficulty,
+
+        frequency,
+
+        xp:
+          reward.xp,
+
+        gold:
+          reward.gold,
+
+        isDaily:
+          frequency === 'Daily',
+
+      }
+
+
+      if (onUpdate) {
+
+        onUpdate(
+          updatedHabit
+        )
+
+      }
+
+
+      onClose()
+
+      return
+
+    }
+
+
+    /*
+    =======================================
+    CREATE NEW HABIT
+    =======================================
+    */
 
     const newHabit = {
 
@@ -168,15 +294,25 @@ function HabitModal({
     }
 
 
-    onCreate(
-      newHabit
-    )
+    if (onCreate) {
+
+      onCreate(
+        newHabit
+      )
+
+    }
 
 
     onClose()
 
   }
 
+
+  /*
+  =========================================
+  CLOSE ON OVERLAY CLICK
+  =========================================
+  */
 
   const handleOverlayClick = (
     event
@@ -220,16 +356,29 @@ function HabitModal({
           <div>
 
             <span className="eyebrow">
-              NEW QUEST
+
+              {isEditing
+                ? 'EDIT QUEST'
+                : 'NEW QUEST'}
+
             </span>
 
+
             <h2>
-              Create a Habit
+
+              {isEditing
+                ? 'Edit Habit'
+                : 'Create a Habit'}
+
             </h2>
 
+
             <p>
-              Turn a real-world habit
-              into an adventure.
+
+              {isEditing
+                ? 'Upgrade your quest settings.'
+                : 'Turn a real-world habit into an adventure.'}
+
             </p>
 
           </div>
@@ -261,15 +410,14 @@ function HabitModal({
         >
 
 
-          {/* ===============================
-              QUEST NAME
-          =============================== */}
+          {/* QUEST NAME */}
 
           <div className="form-group">
 
             <label htmlFor="habit-title">
               Quest Name
             </label>
+
 
             <input
 
@@ -300,15 +448,14 @@ function HabitModal({
           </div>
 
 
-          {/* ===============================
-              DESCRIPTION
-          =============================== */}
+          {/* DESCRIPTION */}
 
           <div className="form-group">
 
             <label htmlFor="habit-description">
               Description
             </label>
+
 
             <input
 
@@ -333,9 +480,7 @@ function HabitModal({
           </div>
 
 
-          {/* ===============================
-              ICON
-          =============================== */}
+          {/* ICON */}
 
           <div className="form-group">
 
@@ -379,9 +524,7 @@ function HabitModal({
           </div>
 
 
-          {/* ===============================
-              CATEGORY
-          =============================== */}
+          {/* CATEGORY + FREQUENCY */}
 
           <div className="form-row">
 
@@ -391,6 +534,7 @@ function HabitModal({
               <label htmlFor="habit-category">
                 Category
               </label>
+
 
               <select
 
@@ -424,15 +568,12 @@ function HabitModal({
             </div>
 
 
-            {/* =============================
-                FREQUENCY
-            ============================= */}
-
             <div className="form-group">
 
               <label htmlFor="habit-frequency">
                 Frequency
               </label>
+
 
               <select
 
@@ -468,9 +609,7 @@ function HabitModal({
           </div>
 
 
-          {/* ===============================
-              DIFFICULTY
-          =============================== */}
+          {/* DIFFICULTY */}
 
           <div className="form-group">
 
@@ -528,9 +667,7 @@ function HabitModal({
           </div>
 
 
-          {/* ===============================
-              REWARD PREVIEW
-          =============================== */}
+          {/* REWARD PREVIEW */}
 
           <div className="reward-preview">
 
@@ -540,8 +677,14 @@ function HabitModal({
                 QUEST REWARD
               </span>
 
+
               <strong>
-                {icon} {title.trim() || 'Your Quest'}
+
+                {icon}{' '}
+
+                {title.trim() ||
+                  'Your Quest'}
+
               </strong>
 
             </div>
@@ -553,6 +696,7 @@ function HabitModal({
                 +{reward.xp} XP
               </b>
 
+
               <b>
                 +{reward.gold} 🪙
               </b>
@@ -562,9 +706,7 @@ function HabitModal({
           </div>
 
 
-          {/* ===============================
-              ERROR
-          =============================== */}
+          {/* ERROR */}
 
           {error && (
 
@@ -575,11 +717,10 @@ function HabitModal({
           )}
 
 
-          {/* ===============================
-              ACTIONS
-          =============================== */}
+          {/* ACTIONS */}
 
           <div className="habit-modal-actions">
+
 
             <button
 
@@ -601,8 +742,13 @@ function HabitModal({
               className="modal-primary"
 
             >
-              ⚔️ Create Quest
+
+              {isEditing
+                ? '💾 Save Changes'
+                : '⚔️ Create Quest'}
+
             </button>
+
 
           </div>
 
