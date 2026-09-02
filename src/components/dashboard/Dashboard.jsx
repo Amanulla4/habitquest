@@ -22,6 +22,7 @@ import {
   saveGame,
   defaultGameState,
   prepareGameForToday,
+  addHistoryEntry,
 } from '../../utils/storage'
 
 
@@ -156,6 +157,13 @@ function Dashboard() {
     )
 
 
+  const [history, setHistory] =
+    useState(
+      preparedGame?.history ??
+      defaultGameState.history
+    )
+
+
   const [levelUpMessage, setLevelUpMessage] =
     useState('')
 
@@ -189,6 +197,7 @@ function Dashboard() {
       currentStreak,
       bestStreak,
       lastCompletionDate,
+      history,
 
     })
 
@@ -200,6 +209,7 @@ function Dashboard() {
     currentStreak,
     bestStreak,
     lastCompletionDate,
+    history,
   ])
 
 
@@ -409,6 +419,21 @@ function Dashboard() {
                 }
 
               : quest
+        )
+    )
+
+
+    /*
+    -----------------------------------------
+    HISTORY
+    -----------------------------------------
+    */
+
+    setHistory(
+      (currentHistory) =>
+        addHistoryEntry(
+          currentHistory,
+          selectedQuest
         )
     )
 

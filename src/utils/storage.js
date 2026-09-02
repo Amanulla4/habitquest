@@ -1,18 +1,28 @@
 const STORAGE_KEY = 'habitquest_save'
 
 
-const getTodayKey = () => {
+/*
+=========================================
+GET TODAY KEY
+=========================================
+*/
+
+export const getTodayKey = () => {
+
   const now = new Date()
 
-  const year = now.getFullYear()
+  const year =
+    now.getFullYear()
 
-  const month = String(
-    now.getMonth() + 1
-  ).padStart(2, '0')
+  const month =
+    String(
+      now.getMonth() + 1
+    ).padStart(2, '0')
 
-  const day = String(
-    now.getDate()
-  ).padStart(2, '0')
+  const day =
+    String(
+      now.getDate()
+    ).padStart(2, '0')
 
   return year + '-' + month + '-' + day
 }
@@ -25,18 +35,26 @@ DEFAULT GAME STATE
 */
 
 export const defaultGameState = {
+
   quests: [],
+
   level: 1,
+
   xp: 0,
+
   gold: 0,
 
   currentStreak: 0,
+
   bestStreak: 0,
 
   lastCompletionDate: null,
 
   lastPlayedDate:
     getTodayKey(),
+
+  history: [],
+
 }
 
 
@@ -55,16 +73,31 @@ export function loadGame() {
         STORAGE_KEY
       )
 
+
     if (!saved) {
+
       return null
+
     }
+
 
     const parsed =
       JSON.parse(saved)
 
+
     return {
+
       ...defaultGameState,
+
       ...parsed,
+
+      history:
+        Array.isArray(
+          parsed.history
+        )
+          ? parsed.history
+          : [],
+
     }
 
   } catch (error) {
@@ -75,7 +108,9 @@ export function loadGame() {
     )
 
     return null
+
   }
+
 }
 
 
@@ -92,13 +127,18 @@ export function saveGame(
   try {
 
     localStorage.setItem(
+
       STORAGE_KEY,
+
       JSON.stringify({
+
         ...gameState,
 
         lastPlayedDate:
           getTodayKey(),
+
       })
+
     )
 
   } catch (error) {
@@ -129,12 +169,18 @@ export function resetDailyQuests(
       if (
         quest.isDaily === false
       ) {
+
         return quest
+
       }
 
+
       return {
+
         ...quest,
+
         completed: false,
+
       }
 
     }
@@ -145,7 +191,7 @@ export function resetDailyQuests(
 
 /*
 =========================================
-CHECK NEW DAY
+PREPARE GAME FOR TODAY
 =========================================
 */
 
@@ -154,18 +200,23 @@ export function prepareGameForToday(
 ) {
 
   if (!game) {
+
     return null
+
   }
+
 
   const today =
     getTodayKey()
 
+
   const lastPlayed =
     game.lastPlayedDate
 
+
   /*
-   * Same day
-   */
+  SAME DAY
+  */
 
   if (
     !lastPlayed ||
@@ -173,18 +224,23 @@ export function prepareGameForToday(
   ) {
 
     return {
+
       ...game,
-      lastPlayedDate: today,
+
+      lastPlayedDate:
+        today,
+
     }
 
   }
 
 
   /*
-   * New day
-   */
+  NEW DAY
+  */
 
   return {
+
     ...game,
 
     quests:
@@ -194,7 +250,92 @@ export function prepareGameForToday(
 
     lastPlayedDate:
       today,
+
   }
+
+}
+
+
+/*
+=========================================
+ADD HISTORY ENTRY
+=========================================
+*/
+
+export function addHistoryEntry(
+  history,
+  quest
+) {
+
+  const today =
+    getTodayKey()
+
+
+  const entry = {
+
+    id:
+      quest.id + '-' + today,
+
+    questId:
+      quest.id,
+
+    title:
+      quest.title,
+
+    icon:
+      quest.icon,
+
+    category:
+      quest.category,
+
+    difficulty:
+      quest.difficulty,
+
+    xp:
+      quest.xp,
+
+    gold:
+      quest.gold,
+
+    date:
+      today,
+
+    completedAt:
+      new Date().toISOString(),
+
+  }
+
+
+  /*
+  Prevent duplicate history
+  for the same quest on the
+  same day.
+  */
+
+  const alreadyExists =
+    history.some(
+      (item) =>
+        item.questId ===
+          quest.id &&
+        item.date ===
+          today
+    )
+
+
+  if (alreadyExists) {
+
+    return history
+
+  }
+
+
+  return [
+
+    entry,
+
+    ...history,
+
+  ]
 
 }
 
