@@ -1,11 +1,13 @@
+import { NavLink } from 'react-router-dom'
+
 import './AppShell.css'
 
 const navigation = [
-  { icon: '🏠', label: 'Home' },
-  { icon: '⚔️', label: 'Quests' },
-  { icon: '🎯', label: 'Campaigns' },
-  { icon: '🗺️', label: 'Journey' },
-  { icon: '🧙', label: 'Character' },
+  { icon: '🏠', label: 'Home', path: '/' },
+  { icon: '⚔️', label: 'Quests', path: '/quests' },
+  { icon: '🎯', label: 'Campaigns', path: '/campaigns' },
+  { icon: '🗺️', label: 'Journey', path: '/journey' },
+  { icon: '🧙', label: 'Character', path: '/character' },
 ]
 
 function AppShell({ children }) {
@@ -23,14 +25,18 @@ function AppShell({ children }) {
         </div>
 
         <nav className="sidebar-nav">
-          {navigation.map((item, index) => (
-            <button
+          {navigation.map((item) => (
+            <NavLink
               key={item.label}
-              className={`nav-item ${index === 0 ? 'active' : ''}`}
+              to={item.path}
+              end={item.path === '/'}
+              className={({ isActive }) =>
+                `nav-item ${isActive ? 'active' : ''}`
+              }
             >
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
-            </button>
+            </NavLink>
           ))}
         </nav>
 
@@ -74,16 +80,18 @@ function AppShell({ children }) {
 
       {/* Mobile Bottom Navigation */}
       <nav className="mobile-nav">
-        {navigation.map((item, index) => (
-          <button
+        {navigation.map((item) => (
+          <NavLink
             key={item.label}
-            className={`mobile-nav-item ${
-              index === 0 ? 'active' : ''
-            }`}
+            to={item.path}
+            end={item.path === '/'}
+            className={({ isActive }) =>
+              `mobile-nav-item ${isActive ? 'active' : ''}`
+            }
           >
             <span>{item.icon}</span>
             <small>{item.label}</small>
-          </button>
+          </NavLink>
         ))}
       </nav>
     </div>
