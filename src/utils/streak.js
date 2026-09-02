@@ -1,63 +1,192 @@
-export function getTodayKey() {
-  return new Date().toISOString().split('T')[0]
+/*
+=========================================
+STREAK UTILITIES
+=========================================
+*/
+
+/*
+=========================================
+GET DATE KEY
+=========================================
+*/
+export function getDateKey(date = new Date()) {
+  const year =
+    date.getFullYear()
+  const month =
+    String(
+      date.getMonth() + 1
+    ).padStart(2, '0')
+  const day =
+    String(
+      date.getDate()
+    ).padStart(2, '0')
+  return year + '-' + month + '-' + day
 }
 
+/*
+=========================================
+GET YESTERDAY KEY
+=========================================
+*/
 export function getYesterdayKey() {
-  const date = new Date()
-
-  date.setDate(date.getDate() - 1)
-
-  return date.toISOString().split('T')[0]
+  const yesterday =
+    new Date()
+  yesterday.setDate(
+    yesterday.getDate() - 1
+  )
+  return getDateKey(
+    yesterday
+  )
 }
 
+/*
+=========================================
+CHECK IF DATE IS YESTERDAY
+=========================================
+*/
+export function isYesterday(
+  dateString
+) {
+  return (
+    dateString ===
+    getYesterdayKey()
+  )
+}
+
+/*
+=========================================
+GET STREAK BONUS (MULTIPLIER)
+=========================================
+*/
+export function getStreakBonus(
+  streak
+) {
+  if (streak >= 30) {
+    return 1.5
+  }
+  if (streak >= 14) {
+    return 1.35
+  }
+  if (streak >= 7) {
+    return 1.25
+  }
+  if (streak >= 3) {
+    return 1.1
+  }
+  return 1
+}
+
+/*
+=========================================
+UPDATE STREAK
+=========================================
+*/
 export function updateStreak(
   currentStreak,
-  bestStreak,
   lastCompletionDate
 ) {
-  const today = getTodayKey()
-  const yesterday = getYesterdayKey()
+  const today =
+    getDateKey()
 
-  // Already completed today
-  if (lastCompletionDate === today) {
+  /*
+  First ever completion
+  */
+  if (
+    !lastCompletionDate
+  ) {
+    return {
+      currentStreak: 1,
+      lastCompletionDate:
+        today,
+    }
+  }
+
+  /*
+  Already completed today
+  */
+  if (
+    lastCompletionDate ===
+    today
+  ) {
     return {
       currentStreak,
-      bestStreak,
       lastCompletionDate,
-      streakIncreased: false,
     }
   }
 
-  // Continuing yesterday's streak
-  if (lastCompletionDate === yesterday) {
-    const newStreak = currentStreak + 1
-
+  /*
+  Completed yesterday
+  */
+  if (
+    isYesterday(
+      lastCompletionDate
+    )
+  ) {
     return {
-      currentStreak: newStreak,
-      bestStreak: Math.max(
-        bestStreak,
-        newStreak
-      ),
-      lastCompletionDate: today,
-      streakIncreased: true,
+      currentStreak:
+        currentStreak + 1,
+      lastCompletionDate:
+        today,
     }
   }
 
-  // Starting a new streak
+  /*
+  Streak was broken
+  */
   return {
     currentStreak: 1,
-    bestStreak: Math.max(bestStreak, 1),
-    lastCompletionDate: today,
-    streakIncreased: true,
+    lastCompletionDate:
+      today,
   }
 }
 
-export function getStreakBonus(streak) {
-  if (streak >= 30) return 50
-  if (streak >= 14) return 30
-  if (streak >= 7) return 20
-  if (streak >= 3) return 10
-  if (streak >= 2) return 5
+/*
+=========================================
+GET STREAK MESSAGE
+=========================================
+*/
+export function getStreakMessage(
+  streak
+) {
+  if (streak >= 30) {
+    return '🔥 LEGENDARY STREAK!'
+  }
+  if (streak >= 14) {
+    return '🔥 TWO WEEK WARRIOR!'
+  }
+  if (streak >= 7) {
+    return '🔥 ONE WEEK STREAK!'
+  }
+  if (streak >= 3) {
+    return '🔥 KEEP THE MOMENTUM!'
+  }
+  if (streak === 2) {
+    return '🔥 TWO DAYS STRONG!'
+  }
+  if (streak === 1) {
+    return '🔥 STREAK STARTED!'
+  }
+  return 'Start your streak today!'
+}
 
-  return 0
+/*
+=========================================
+GET STREAK MILESTONE
+=========================================
+*/
+export function getStreakMilestone(
+  streak
+) {
+  const milestones = [
+    3,
+    7,
+    14,
+    30,
+    60,
+    100,
+  ]
+  return milestones.find(
+    (milestone) =>
+      milestone === streak
+  ) || null
 }

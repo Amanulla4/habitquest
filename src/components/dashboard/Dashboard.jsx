@@ -388,120 +388,143 @@ function Dashboard() {
   =========================================
   */
 
-  const completeQuest = (
-    questId
-  ) => {
+  const completeQuest = (questId) => {
 
-    const selectedQuest =
-      quests.find(
-        (quest) =>
-          quest.id === questId
-      )
+    const selectedQuest = quests.find(
+      (quest) => quest.id === questId
+    )
 
-
-    if (
-      !selectedQuest ||
-      selectedQuest.completed
-    ) {
+    if (!selectedQuest || selectedQuest.completed) {
       return
     }
 
-
-    setQuests(
-      (currentQuests) =>
-        currentQuests.map(
-          (quest) =>
-            quest.id === questId
-
-              ? {
-                  ...quest,
-                  completed: true,
-                }
-
-              : quest
-        )
-    )
-
-
     /*
-    -----------------------------------------
-    HISTORY
-    -----------------------------------------
+    =========================================
+    COMPLETE QUEST
+    =========================================
     */
 
-    setHistory(
-      (currentHistory) =>
-        addHistoryEntry(
-          currentHistory,
-          selectedQuest
-        )
+    setQuests((currentQuests) =>
+      currentQuests.map((quest) =>
+        quest.id === questId
+          ? {
+              ...quest,
+              completed: true,
+            }
+          : quest
+      )
     )
 
+    /*
+    =========================================
+    HISTORY
+    =========================================
+    */
 
-    const streakResult =
-      updateStreak(
-        currentStreak,
-        bestStreak,
-        lastCompletionDate
+    setHistory((currentHistory) =>
+      addHistoryEntry(
+        currentHistory,
+        selectedQuest
       )
+    )
 
+    /*
+    =========================================
+    STREAK
+    =========================================
+    */
+
+    const streakResult = updateStreak(
+      currentStreak,
+      lastCompletionDate
+    )
+
+    const streakIncreased =
+      streakResult.currentStreak >
+      currentStreak
 
     setCurrentStreak(
       streakResult.currentStreak
     )
 
-
-    setBestStreak(
-      streakResult.bestStreak
-    )
-
-
     setLastCompletionDate(
       streakResult.lastCompletionDate
     )
 
+    /*
+    =========================================
+    BEST STREAK
+    =========================================
+    */
 
-    const streakBonus =
-      streakResult.streakIncreased
-        ? getStreakBonus(
-            streakResult.currentStreak
-          )
-        : 0
+    const newBestStreak = Math.max(
+      bestStreak,
+      streakResult.currentStreak
+    )
 
+    setBestStreak(newBestStreak)
+
+    /*
+    =========================================
+    STREAK BONUS XP
+    =========================================
+    */
+
+    const streakMultiplier = streakIncreased
+      ? getStreakBonus(
+          streakResult.currentStreak
+        )
+      : 1
+
+    const streakBonusXp = streakIncreased
+      ? Math.round(
+          selectedQuest.xp *
+            (streakMultiplier - 1)
+        )
+      : 0
 
     const totalQuestXp =
-      selectedQuest.xp +
-      streakBonus
+      selectedQuest.xp + streakBonusXp
 
+    /*
+    =========================================
+    ADD XP
+    =========================================
+    */
 
-    const result =
-      addXp(
-        xp,
-        level,
-        totalQuestXp
-      )
-
+    const result = addXp(
+      xp,
+      level,
+      totalQuestXp
+    )
 
     setXp(result.xp)
 
     setLevel(result.level)
 
+    /*
+    =========================================
+    ADD GOLD
+    =========================================
+    */
 
-    setGold(
-      (currentGold) =>
-        currentGold +
-        selectedQuest.gold
+    setGold((currentGold) =>
+      currentGold + selectedQuest.gold
     )
 
+    /*
+    =========================================
+    LEVEL UP MESSAGE
+    =========================================
+    */
 
-    if (
-      result.leveledUp
-    ) {
+    if (result.leveledUp) {
 
       setLevelUpMessage(
-        `⚔️ LEVEL UP! You are now Level ${result.level}!`
+        '⚔️ LEVEL UP! You are now Level ' +
+        result.level +
+        '!'
       )
-
 
       setTimeout(() => {
         setLevelUpMessage('')
@@ -509,21 +532,25 @@ function Dashboard() {
 
     }
 
+    /*
+    =========================================
+    STREAK MESSAGE
+    =========================================
+    */
 
-    if (
-      streakResult.streakIncreased
-    ) {
+    if (streakIncreased) {
 
       const bonusText =
-        streakBonus > 0
-          ? ` +${streakBonus} bonus XP`
+        streakBonusXp > 0
+          ? ' +' + streakBonusXp + ' bonus XP'
           : ''
 
-
       setStreakMessage(
-        `🔥 ${streakResult.currentStreak} day streak!${bonusText}`
+        '🔥 ' +
+        streakResult.currentStreak +
+        ' day streak!' +
+        bonusText
       )
-
 
       setTimeout(() => {
         setStreakMessage('')
