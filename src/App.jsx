@@ -7,6 +7,7 @@ import {
 import AppShell from './components/layout/AppShell'
 import Dashboard from './components/dashboard/Dashboard'
 import History from './pages/History'
+import Achievements from './pages/Achievements'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/journey" element={<History />} />
+          <Route path="/character" element={<Achievements />} />
         </Routes>
       </AppShell>
     </BrowserRouter>

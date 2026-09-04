@@ -21,6 +21,10 @@ import {
 } from '../../utils/streak'
 
 import {
+  checkAchievements,
+} from '../../utils/achievements'
+
+import {
   loadGame,
   saveGame,
   defaultGameState,
@@ -181,6 +185,12 @@ function Dashboard() {
       defaultGameState.history
     )
 
+  const [unlockedAchievements, setUnlockedAchievements] =
+    useState(
+      preparedGame?.unlockedAchievements ??
+      defaultGameState.unlockedAchievements
+    )
+
 
   /*
   =========================================
@@ -195,6 +205,9 @@ function Dashboard() {
     useState('')
 
   const [milestoneMessage, setMilestoneMessage] =
+    useState('')
+
+  const [achievementMessage, setAchievementMessage] =
     useState('')
 
 
@@ -227,6 +240,7 @@ function Dashboard() {
       bestStreak,
       lastCompletionDate,
       history,
+      unlockedAchievements,
     })
   }, [
     quests,
@@ -237,6 +251,7 @@ function Dashboard() {
     bestStreak,
     lastCompletionDate,
     history,
+    unlockedAchievements,
   ])
 
 
@@ -271,14 +286,6 @@ function Dashboard() {
   /*
   =========================================
   STREAK MILESTONE CALCULATIONS
-
-  previousMilestone uses the "floor"
-  helper (largest milestone <= streak),
-  NOT the exact-match helper - so the
-  progress bar is accurate even when
-  the streak sits between two
-  milestones (e.g. streak 5 sits
-  between the 3-day and 7-day marks).
   =========================================
   */
 
@@ -356,11 +363,6 @@ function Dashboard() {
   /*
   =========================================
   CLOSE MODAL
-
-  HabitModal already calls onClose
-  after a successful create/update,
-  so createHabit / updateHabit below
-  don't call it a second time.
   =========================================
   */
 
@@ -486,15 +488,21 @@ function Dashboard() {
 
     /*
     ADD HISTORY
+
+    Computed directly (not via the
+    functional setState form) so we
+    can read the resulting length
+    synchronously below for the
+    achievement check.
     */
 
-    setHistory(
-      (currentHistory) =>
-        addHistoryEntry(
-          currentHistory,
-          selectedQuest
-        )
-    )
+    const newHistory =
+      addHistoryEntry(
+        history,
+        selectedQuest
+      )
+
+    setHistory(newHistory)
 
 
     /*
@@ -559,10 +567,6 @@ function Dashboard() {
 
     /*
     MILESTONE BONUS
-
-    If the new streak lands exactly on
-    a milestone, grant its XP for real,
-    not just show it in a message.
     */
 
     const milestone =
@@ -576,10 +580,68 @@ function Dashboard() {
       milestone ? milestone.xp : 0
 
 
+    /*
+    ACHIEVEMENTS
+
+    Note: level-based achievements use
+    the CURRENT level (before this
+    quest's XP is applied). If a quest
+    completion is what pushes the
+    player over a level threshold,
+    that achievement will unlock on
+    the NEXT completion instead of
+    this one - a small, acceptable
+    simplification to avoid a circular
+    dependency between XP and the
+    achievement check.
+    */
+
+    const newlyUnlocked =
+      checkAchievements({
+        completedQuestCount:
+          newHistory.length,
+        currentStreak:
+          streakResult.currentStreak,
+        level,
+        unlockedAchievements,
+      })
+
+    const achievementXp =
+      newlyUnlocked.reduce(
+        (total, achievement) =>
+          total + achievement.rewardXp,
+        0
+      )
+
+    const achievementGold =
+      newlyUnlocked.reduce(
+        (total, achievement) =>
+          total + achievement.rewardGold,
+        0
+      )
+
+    if (newlyUnlocked.length > 0) {
+      setUnlockedAchievements(
+        (currentUnlocked) => [
+          ...currentUnlocked,
+          ...newlyUnlocked.map(
+            (achievement) =>
+              achievement.id
+          ),
+        ]
+      )
+    }
+
+
+    /*
+    TOTAL XP FOR THIS COMPLETION
+    */
+
     const totalQuestXp =
       selectedQuest.xp +
       streakBonusXp +
-      milestoneXp
+      milestoneXp +
+      achievementXp
 
 
     /*
@@ -604,7 +666,8 @@ function Dashboard() {
     setGold(
       (currentGold) =>
         currentGold +
-        selectedQuest.gold
+        selectedQuest.gold +
+        achievementGold
     )
 
 
@@ -668,6 +731,37 @@ function Dashboard() {
         }, 3000)
       }
     }
+
+
+    /*
+    ACHIEVEMENT MESSAGE
+    */
+
+    if (newlyUnlocked.length > 0) {
+
+      const firstAchievement =
+        newlyUnlocked[0]
+
+      const extraCount =
+        newlyUnlocked.length - 1
+
+      const suffix =
+        extraCount > 0
+          ? ' (+' + extraCount + ' more)'
+          : ''
+
+      setAchievementMessage(
+        '🏅 ACHIEVEMENT UNLOCKED: ' +
+        firstAchievement.icon +
+        ' ' +
+        firstAchievement.title +
+        suffix
+      )
+
+      setTimeout(() => {
+        setAchievementMessage('')
+      }, 4000)
+    }
   }
 
 
@@ -697,6 +791,12 @@ function Dashboard() {
       {milestoneMessage && (
         <div className="streak-message milestone-message">
           {milestoneMessage}
+        </div>
+      )}
+
+      {achievementMessage && (
+        <div className="streak-message achievement-message">
+          {achievementMessage}
         </div>
       )}
 
@@ -983,9 +1083,7 @@ function Dashboard() {
       </div>
 
 
-      {/* =====================================
-          STREAK PROGRESS
-      ===================================== */}
+      {/* STREAK PROGRESS */}
 
       <section className="streak-progress-card">
 
