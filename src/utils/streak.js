@@ -201,6 +201,9 @@ Each milestone has:
 - reward: a display-only string
   (kept in sync with xp, used for
   the notification text)
+
+Kept in ascending order of `days` -
+several helpers below rely on this.
 =========================================
 */
 
@@ -258,6 +261,11 @@ export const STREAK_MILESTONES = [
 /*
 =========================================
 GET REACHED MILESTONE
+
+Exact match only - true when the streak
+count is EXACTLY on a milestone day.
+Used to trigger the one-time reward /
+notification.
 =========================================
 */
 
@@ -276,6 +284,9 @@ export function getStreakMilestone(
 /*
 =========================================
 GET NEXT MILESTONE
+
+The next milestone still ahead of the
+current streak.
 =========================================
 */
 
@@ -288,4 +299,48 @@ export function getNextStreakMilestone(
         milestone.days > streak
     ) || null
   )
+}
+
+
+/*
+=========================================
+GET PREVIOUS MILESTONE
+
+The most recent milestone the streak
+has already passed (or is currently
+on), regardless of whether the streak
+lands exactly on it. Used as the
+"floor" for progress-bar math so the
+bar fill is accurate between two
+milestones (e.g. streak 5 is between
+the 3-day and 7-day milestones).
+
+Returns null if no milestone has been
+reached yet (streak < 3).
+=========================================
+*/
+
+export function getPreviousStreakMilestone(
+  streak
+) {
+  let previous = null
+
+  for (
+    let index = 0;
+    index < STREAK_MILESTONES.length;
+    index++
+  ) {
+
+    const milestone =
+      STREAK_MILESTONES[index]
+
+    if (milestone.days <= streak) {
+      previous = milestone
+    } else {
+      break
+    }
+
+  }
+
+  return previous
 }

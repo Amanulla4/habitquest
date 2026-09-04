@@ -699,3 +699,130 @@
     text-align: center;
   }
 }
+
+/* =========================================
+   STREAK PROGRESS CARD
+========================================= */
+
+.streak-progress-card {
+  padding: 20px 22px;
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  border-radius: 18px;
+  background: rgba(255, 107, 53, 0.04);
+}
+
+.streak-progress-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.streak-progress-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.streak-flame {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: rgba(255, 107, 53, 0.14);
+  font-size: 20px;
+}
+
+.streak-progress-title > div > span {
+  display: block;
+  color: #ff9b62;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.streak-progress-title strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.next-milestone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  text-align: right;
+}
+
+.next-milestone span {
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.next-milestone strong {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.streak-progress-bar {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.streak-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff6b35, var(--gold));
+  transition: width 0.4s ease;
+}
+
+.streak-progress-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.streak-progress-bottom span {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.streak-progress-bottom strong {
+  color: var(--text-primary);
+}
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+  .streak-progress-top {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .next-milestone {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .streak-progress-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+}

@@ -16,6 +16,8 @@ import {
   updateStreak,
   getStreakBonus,
   getStreakMilestone,
+  getNextStreakMilestone,
+  getPreviousStreakMilestone,
 } from '../../utils/streak'
 
 import {
@@ -268,6 +270,65 @@ function Dashboard() {
 
   /*
   =========================================
+  STREAK MILESTONE CALCULATIONS
+
+  previousMilestone uses the "floor"
+  helper (largest milestone <= streak),
+  NOT the exact-match helper - so the
+  progress bar is accurate even when
+  the streak sits between two
+  milestones (e.g. streak 5 sits
+  between the 3-day and 7-day marks).
+  =========================================
+  */
+
+  const nextMilestone =
+    getNextStreakMilestone(
+      currentStreak
+    )
+
+  const previousMilestone =
+    getPreviousStreakMilestone(
+      currentStreak
+    )
+
+  const previousMilestoneDays =
+    previousMilestone?.days ?? 0
+
+  const nextMilestoneDays =
+    nextMilestone?.days ??
+    previousMilestoneDays
+
+  const milestoneRange =
+    nextMilestoneDays -
+    previousMilestoneDays
+
+  const milestoneProgress =
+    nextMilestone && milestoneRange > 0
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            ((currentStreak -
+              previousMilestoneDays) /
+              milestoneRange) *
+              100
+          )
+        )
+      : 100
+
+  const daysToNextMilestone =
+    nextMilestone
+      ? Math.max(
+          0,
+          nextMilestone.days -
+            currentStreak
+        )
+      : 0
+
+
+  /*
+  =========================================
   OPEN CREATE MODAL
   =========================================
   */
@@ -296,11 +357,10 @@ function Dashboard() {
   =========================================
   CLOSE MODAL
 
-  Passed to HabitModal as onClose.
-  HabitModal already calls this after
-  a successful create/update, so we
-  don't call it a second time from
-  createHabit / updateHabit below.
+  HabitModal already calls onClose
+  after a successful create/update,
+  so createHabit / updateHabit below
+  don't call it a second time.
   =========================================
   */
 
@@ -346,11 +406,6 @@ function Dashboard() {
               ? {
                   ...quest,
                   ...updatedHabit,
-
-                  /*
-                   * Editing a habit does
-                   * NOT reset completion.
-                   */
                   completed:
                     quest.completed,
                 }
@@ -412,9 +467,7 @@ function Dashboard() {
 
 
     /*
-    -----------------------------------------
     MARK QUEST COMPLETE
-    -----------------------------------------
     */
 
     setQuests(
@@ -432,9 +485,7 @@ function Dashboard() {
 
 
     /*
-    -----------------------------------------
     ADD HISTORY
-    -----------------------------------------
     */
 
     setHistory(
@@ -447,9 +498,7 @@ function Dashboard() {
 
 
     /*
-    -----------------------------------------
     UPDATE STREAK
-    -----------------------------------------
     */
 
     const streakResult =
@@ -463,16 +512,13 @@ function Dashboard() {
       streakResult.currentStreak
     )
 
-
     setLastCompletionDate(
       streakResult.lastCompletionDate
     )
 
 
     /*
-    -----------------------------------------
     BEST STREAK
-    -----------------------------------------
     */
 
     const newBestStreak =
@@ -492,9 +538,7 @@ function Dashboard() {
 
 
     /*
-    -----------------------------------------
     STREAK BONUS (multiplier)
-    -----------------------------------------
     */
 
     const streakMultiplier =
@@ -514,14 +558,11 @@ function Dashboard() {
 
 
     /*
-    -----------------------------------------
     MILESTONE BONUS
 
-    If the new streak count lands
-    exactly on a milestone, grant its
-    XP reward for real (not just show
-    the number in a message).
-    -----------------------------------------
+    If the new streak lands exactly on
+    a milestone, grant its XP for real,
+    not just show it in a message.
     */
 
     const milestone =
@@ -535,12 +576,6 @@ function Dashboard() {
       milestone ? milestone.xp : 0
 
 
-    /*
-    -----------------------------------------
-    TOTAL XP FOR THIS COMPLETION
-    -----------------------------------------
-    */
-
     const totalQuestXp =
       selectedQuest.xp +
       streakBonusXp +
@@ -548,9 +583,7 @@ function Dashboard() {
 
 
     /*
-    -----------------------------------------
     ADD XP
-    -----------------------------------------
     */
 
     const result =
@@ -565,9 +598,7 @@ function Dashboard() {
 
 
     /*
-    -----------------------------------------
     ADD GOLD
-    -----------------------------------------
     */
 
     setGold(
@@ -578,9 +609,7 @@ function Dashboard() {
 
 
     /*
-    -----------------------------------------
     LEVEL UP
-    -----------------------------------------
     */
 
     if (
@@ -599,16 +628,10 @@ function Dashboard() {
 
 
     /*
-    -----------------------------------------
     STREAK / MILESTONE MESSAGE
-    -----------------------------------------
     */
 
     if (streakIncreased) {
-
-      /*
-      MILESTONE
-      */
 
       if (milestone) {
         setMilestoneMessage(
@@ -627,13 +650,7 @@ function Dashboard() {
         setTimeout(() => {
           setMilestoneMessage('')
         }, 4000)
-      }
-
-      /*
-      NORMAL STREAK
-      */
-
-      else {
+      } else {
         const bonusText =
           streakBonusXp > 0
             ? ' +' + streakBonusXp + ' bonus XP'
@@ -663,9 +680,7 @@ function Dashboard() {
   return (
     <div className="dashboard">
 
-      {/* =====================================
-          NOTIFICATIONS
-      ===================================== */}
+      {/* NOTIFICATIONS */}
 
       {levelUpMessage && (
         <div className="level-up-message">
@@ -673,13 +688,11 @@ function Dashboard() {
         </div>
       )}
 
-
       {streakMessage && (
         <div className="streak-message">
           {streakMessage}
         </div>
       )}
-
 
       {milestoneMessage && (
         <div className="streak-message milestone-message">
@@ -688,9 +701,7 @@ function Dashboard() {
       )}
 
 
-      {/* =====================================
-          HEADER
-      ===================================== */}
+      {/* HEADER */}
 
       <div className="dashboard-header">
 
@@ -749,14 +760,11 @@ function Dashboard() {
       </div>
 
 
-      {/* =====================================
-          HERO
-      ===================================== */}
+      {/* HERO */}
 
       <section className="hero-card">
 
         <div className="hero-glow" />
-
 
         <div className="character">
 
@@ -778,7 +786,6 @@ function Dashboard() {
             <h3>
               Aman
             </h3>
-
 
             <div className="level-row">
 
@@ -907,9 +914,7 @@ function Dashboard() {
       </section>
 
 
-      {/* =====================================
-          QUICK STATS
-      ===================================== */}
+      {/* QUICK STATS */}
 
       <div className="quick-stats">
 
@@ -979,8 +984,109 @@ function Dashboard() {
 
 
       {/* =====================================
-          QUESTS
+          STREAK PROGRESS
       ===================================== */}
+
+      <section className="streak-progress-card">
+
+        <div className="streak-progress-top">
+
+          <div className="streak-progress-title">
+
+            <div className="streak-flame">
+              🔥
+            </div>
+
+            <div>
+
+              <span>
+                CURRENT STREAK
+              </span>
+
+              <strong>
+                {currentStreak} Day
+                {currentStreak !== 1
+                  ? 's'
+                  : ''}
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          {nextMilestone && (
+            <div className="next-milestone">
+
+              <span>
+                NEXT MILESTONE
+              </span>
+
+              <strong>
+                {nextMilestone.icon}{' '}
+                {nextMilestone.title}
+              </strong>
+
+            </div>
+          )}
+
+        </div>
+
+
+        <div className="streak-progress-bar">
+
+          <div
+            className="streak-progress-fill"
+            style={{
+              width:
+                milestoneProgress + '%',
+            }}
+          />
+
+        </div>
+
+
+        <div className="streak-progress-bottom">
+
+          {nextMilestone ? (
+
+            <span>
+              🔥 {daysToNextMilestone}{' '}
+              {daysToNextMilestone === 1
+                ? 'day'
+                : 'days'}{' '}
+              until{' '}
+              <strong>
+                {nextMilestone.days}
+              </strong>{' '}
+              days
+            </span>
+
+          ) : (
+
+            <span>
+              🏆 All streak milestones
+              conquered!
+            </span>
+
+          )}
+
+
+          {nextMilestone && (
+            <span>
+              Reward:{' '}
+              <strong>
+                {nextMilestone.reward}
+              </strong>
+            </span>
+          )}
+
+        </div>
+
+      </section>
+
+
+      {/* QUESTS */}
 
       <section className="quests-section">
 
@@ -1112,8 +1218,6 @@ function Dashboard() {
                   </div>
 
 
-                  {/* COMPLETE */}
-
                   <button
                     className={
                       'quest-check' +
@@ -1139,8 +1243,6 @@ function Dashboard() {
                   </button>
 
 
-                  {/* EDIT */}
-
                   <button
                     className="quest-edit"
                     onClick={() =>
@@ -1155,8 +1257,6 @@ function Dashboard() {
                     ✏️
                   </button>
 
-
-                  {/* DELETE */}
 
                   <button
                     className="quest-delete"
@@ -1184,9 +1284,7 @@ function Dashboard() {
       </section>
 
 
-      {/* =====================================
-          DAILY PROGRESS
-      ===================================== */}
+      {/* DAILY PROGRESS */}
 
       <section className="daily-progress-card">
 
@@ -1237,9 +1335,7 @@ function Dashboard() {
       </section>
 
 
-      {/* =====================================
-          HABIT MODAL
-      ===================================== */}
+      {/* HABIT MODAL */}
 
       {showHabitModal && (
 
